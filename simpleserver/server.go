@@ -49,7 +49,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 func main() {
 	var httpServer http.Server
 
-	http.HandleFunc("/", handler)
+	http.HandleFunc("/cookie", handler)
 	http.HandleFunc("/digest", handlerDigest)
 
 	log.Println("start http listening : 18888")
