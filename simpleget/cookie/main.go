@@ -13,11 +13,12 @@ func main() {
 		panic(err)
 	}
 
-	client := http.Client{
+	http.DefaultClient = &http.Client{
 		Jar: jar,
 	}
+
 	for i := 0; i < 2; i++ {
-		resp, err := client.Get("http:127.0.0.1:5000/cookie")
+		resp, err := http.Get("http://127.0.0.1:5000/cookie")
 		if err != nil {
 			panic(err)
 		}
