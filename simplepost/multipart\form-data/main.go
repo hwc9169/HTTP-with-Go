@@ -6,6 +6,7 @@ import (
 	"log"
 	"mime/multipart"
 	"net/http"
+	"net/textproto"
 	"os"
 )
 
@@ -14,15 +15,17 @@ func main() {
 	writer := multipart.NewWriter(&buffer)
 	writer.WriteField("name", "Michael Jackson")
 
-	fileWriter, err := writer.CreateFormFile("tumbnail", "photo.jpg")
-	if err != nil {
-		panic(err)
+	part := make(textproto.MIMEHeader)                                                  // fileWriter, err := writer.CreateFormFile("tumbnail", "photo.jpg")
+	part.Set("Content-Type", "image/jpeg")                                              // if err != nil {
+	part.Set("Content-Disposition", `form-data; name="thumbnail; filename="photo.jpg"`) // 	panic(err)
+	fileWriter, err := writer.CreatePart(part)                                          // }
+	if err != nil {                                                                     // readFile, err := os.Open("photo.jpg")
+		panic(err) // if err != nil {
+	} // 	panic(err)
+	readFile, err := os.Open("photo.jpg") // }
+	if err != nil {                       // defer readFile.Close()
+		panic(err) // io.Copy(fileWriter, readFile)
 	}
-	readFile, err := os.Open("photo.jpg")
-	if err != nil {
-		panic(err)
-	}
-	defer readFile.Close()
 	io.Copy(fileWriter, readFile)
 	writer.Close()
 
