@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"fmt"
 	"log"
 	"net/http"
@@ -17,8 +18,15 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	server := &http.Server{
+		TLSConfig: &tls.Config{
+			ClientAuth: tls.RequireAndVerifyClientCert,
+			MinVersion: tls.VersionTLS12,
+		},
+		Addr: ":5050",
+	}
 	http.HandleFunc("/", handler)
 	log.Println("Start http listening :5050")
-	err := http.ListenAndServeTLS(":5050", "/home/hwc9169/https/server.crt", "/home/hwc9169/https/server.key", nil)
+	err := server.ListenAndServeTLS("/home/hwc9169/https/server.crt", "/home/hwc9169/https/server.key")
 	log.Println(err)
 }
