@@ -12,6 +12,19 @@ import (
 	"github.com/k0kubun/pp"
 )
 
+func handlerChunkedResponse(w http.ResponseWriter, r *http.Request) {
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		panic("expected htttp.ResponseWriter to be an http.Flusher")
+	}
+	for i := 1; i <= 10; i++ {
+		fmt.Fprintf(w, "Chunk #%d\n", i)
+		flusher.Flush()
+		time.Sleep(500 * time.Millisecond)
+	}
+	flusher.Flush()
+}
+
 func handlerUpgrade(w http.ResponseWriter, r *http.Request) {
 	// 이 엔드포인트에서는 변경만 받아들인다.
 	if r.Header.Get("Connection") != "Upgrade" || r.Header.Get("Upgrade") != "MyProtocol" {
@@ -93,7 +106,8 @@ func main() {
 	http.HandleFunc("/cookie", handler)
 	http.HandleFunc("/digest", handlerDigest)
 	http.HandleFunc("/upgrade", handlerUpgrade)
+	http.HandleFunc("/chunked", handlerChunkedResponse)
 	log.Println("start http listening : 5000")
-	httpServer.Addr = ":5000"
+	httpServer.Addr = ":5001"
 	log.Println(httpServer.ListenAndServe())
 }
