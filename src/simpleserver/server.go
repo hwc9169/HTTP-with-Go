@@ -2,13 +2,54 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httputil"
+	"time"
 
 	"github.com/k0kubun/pp"
 )
+
+func handlerUpgrade(w http.ResponseWriter, r *http.Request) {
+	// 이 엔드포인트에서는 변경만 받아들인다.
+	if r.Header.Get("Connection") != "Upgrade" || r.Header.Get("Upgrade") != "MyProtocol" {
+		w.WriteHeader(400)
+		return
+	}
+	fmt.Println("Upgrade to MyProtocol")
+
+	// 소켓 획득
+	hijacker := w.(http.Hijacker)
+	conn, readWriter, err := hijacker.Hijack()
+	if err != nil {
+		panic(err)
+	}
+	defer conn.Close()
+
+	//  프로토콜이 변경 되었음을 응답
+	response := http.Response{
+		StatusCode: 101,
+		Header:     make(http.Header),
+	}
+	response.Header.Set("Upgrade", "Myprotocol")
+	response.Header.Set("Connection", "Upgrade")
+	response.Write(conn)
+
+	// 오리지널 통신 시작
+	for i := 1; i <= 10; i++ {
+		fmt.Fprintf(readWriter, "%d\n", i)
+		fmt.Println("->", i)
+		readWriter.Flush() // Trigger "chunked" encoding and send a chunk
+		recv, err := readWriter.ReadBytes('\n')
+		if err == io.EOF {
+			break
+		}
+		fmt.Printf("<- %s", string(recv))
+		time.Sleep(500 * time.Millisecond)
+	}
+}
 
 func handlerDigest(w http.ResponseWriter, r *http.Request) {
 	pp.Printf("URL: %s\n", r.URL.String())
@@ -51,8 +92,8 @@ func main() {
 
 	http.HandleFunc("/cookie", handler)
 	http.HandleFunc("/digest", handlerDigest)
-
-	log.Println("start http listening : 18888")
+	http.HandleFunc("/upgrade", handlerUpgrade)
+	log.Println("start http listening : 5000")
 	httpServer.Addr = ":5000"
 	log.Println(httpServer.ListenAndServe())
 }
