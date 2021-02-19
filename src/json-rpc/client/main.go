@@ -5,7 +5,6 @@ import (
 	"net/rpc/jsonrpc"
 )
 
-// 인수
 type Args struct {
 	A, B int
 }
