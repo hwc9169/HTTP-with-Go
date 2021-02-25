@@ -1,0 +1,1 @@
+c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
